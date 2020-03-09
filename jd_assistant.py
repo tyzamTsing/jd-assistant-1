@@ -113,6 +113,34 @@ class Assistant(object):
         self.sess = requests.session()
         return False
 
+    def _get_login_page(self):
+        url = "https://passport.jd.com/new/login.aspx"
+        page = self.sess.get(url, headers=self.headers)
+        return page
+
+    def _get_QRcode(self):
+        url = 'https://qr.m.jd.com/show'
+        payload = {
+            'appid': 133,
+            'size': 147,
+            't': str(int(time.time() * 1000)),
+        }
+        headers = {
+            'User-Agent': self.user_agent,
+            'Referer': 'https://passport.jd.com/new/login.aspx',
+        }
+        resp = self.sess.get(url=url, headers=headers, params=payload)
+
+        if not response_status(resp):
+            logger.info('获取二维码失败')
+            return False
+
+        QRCode_file = 'QRcode.png'
+        save_image(resp, QRCode_file)
+        logger.info('二维码获取成功，请打开京东APP扫描')
+        open_image(QRCode_file)
+        return True
+
     def _get_QRcode_ticket(self):
         url = 'https://qr.m.jd.com/check'
         payload = {

@@ -12,7 +12,7 @@ if __name__ == '__main__':
     area = '18_1511_1513_31148'  # 区域id
     asst = Assistant()  # 初始化
     asst.login_by_QRcode()  # 扫码登陆
-    asst.exec_seckill_by_time(sku_ids, '2020-03-08 21:22:30.000', 3, 2, 1)
+    asst.exec_seckill_by_time(sku_ids, '2020-03-09 20:00:00.000', 3, 1, 1)
     # asst.buy_item_in_stock(sku_ids=sku_ids, area=area, wait_all=False, stock_interval=5)  # 根据商品是否有货自动下单
     # 6个参数：
     # sku_ids: 商品id。可以设置多个商品，也可以带数量，如：'1234' 或 '1234,5678' 或 '1234:2' 或 '1234:2,5678:3'
