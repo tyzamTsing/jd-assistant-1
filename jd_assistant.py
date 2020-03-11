@@ -252,7 +252,7 @@ class Assistant(object):
         resp = self.sess.get(url=reserve_url, headers=headers)
         soup = BeautifulSoup(resp.text, "html.parser")
         reserve_result = soup.find('p', {'class': 'bd-right-result'}).text.strip(' \t\r\n')
-        # 预约成功，已获得抢购资格 / 您已成功预约过了，无需重复预约
+        # 预约成功，已获得抢购资格 / 您已成功预约过了，无需重复预约!
         logger.info(reserve_result)
 
     @check_login
@@ -976,6 +976,8 @@ class Assistant(object):
             'Host': 'itemko.jd.com',
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
+        retry_interval = 0.1
+
         while True:
             resp = self.sess.get(url=url, headers=headers, params=payload)
             resp_json = parse_json(resp.text)
@@ -987,8 +989,8 @@ class Assistant(object):
                 logger.info("抢购链接获取成功: %s", seckill_url)
                 return seckill_url
             else:
-                logger.info("抢购链接获取失败，%s不是抢购商品或抢购页面暂未刷新，0.1秒后重试", sku_id)
-                time.sleep(0.1)
+                logger.info("抢购链接获取失败，%s不是抢购商品或抢购页面暂未刷新，%s秒后重试", sku_id, retry_interval)
+                time.sleep(retry_interval)
 
     def request_seckill_url(self, sku_id):
         """访问商品的抢购链接（用于设置cookie等）
@@ -1062,7 +1064,7 @@ class Assistant(object):
             'skuId': sku_id,
             'num': num,
             'addressId': default_address['id'],
-            'yuShou': 'false',
+            'yuShou': str(bool(int(init_info['seckillSkuVO']['extMap'].get('YuShou', '0')))).lower(),
             'isModifyAddress': 'false',
             'name': default_address['name'],
             'provinceId': default_address['provinceId'],
@@ -1082,7 +1084,7 @@ class Assistant(object):
             'invoicePhone': invoice_info.get('invoicePhone', ''),
             'invoicePhoneKey': invoice_info.get('invoicePhoneKey', ''),
             'invoice': 'true' if invoice_info else 'false',
-            'password': '',
+            'password': global_config.get('account', 'payment_pwd'),
             'codTimeType': 3,
             'paymentType': 4,
             'areaCode': '',
@@ -1113,8 +1115,16 @@ class Assistant(object):
             'Referer': 'https://marathon.jd.com/seckill/seckill.action?skuId={0}&num={1}&rid={2}'.format(
                 sku_id, num, int(time.time())),
         }
-        resp = self.sess.post(url=url, params=payload, data=self.seckill_order_data.get(sku_id), headers=headers)
-        resp_json = parse_json(resp.text)
+        resp_json = None
+        try:
+            resp = self.sess.post(url=url, headers=headers, params=payload,
+                                  data=self.seckill_order_data.get(sku_id), timeout=2)
+            logger.info(resp.text)
+            resp_json = parse_json(resp.text)
+        except Exception as e:
+            logger.error('秒杀请求出错：%s', str(e))
+            return False
+
         # 返回信息
         # 抢购失败：
         # {'errorMessage': '很遗憾没有抢到，再接再厉哦。', 'orderId': 0, 'resultCode': 60074, 'skuId': 0, 'success': False}
