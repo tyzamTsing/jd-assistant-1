@@ -36,12 +36,6 @@ from util import (
 )
 
 
-def get_jd_time():
-    html = requests.get('https://a.jd.com//ajax/queryServerData.html')
-    resp_json = parse_json(html.text)
-    return resp_json.get('serverTime')
-
-
 class Assistant(object):
 
     def __init__(self):
@@ -1181,14 +1175,8 @@ class Assistant(object):
         """
         items_dict = parse_sku_id(sku_ids=sku_ids)
         logger.info('准备抢购商品:%s', list(items_dict.keys()))
-        jd_time = get_jd_time()
-        # 当前时间戳
-        now_time = datetime.now()
-        obj_stamp = int(time.mktime(now_time.timetuple()) * 1000.0 + now_time.microsecond / 1000.0)
-        # 时间偏移
-        offset_time = obj_stamp - jd_time
         t = Timer(buy_time=buy_time)
-        t.start(offset_time)
+        t.start()
 
         for sku_id in items_dict:
             logger.info('开始抢购商品:%s', sku_id)
