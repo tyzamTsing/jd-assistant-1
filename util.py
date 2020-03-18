@@ -227,3 +227,9 @@ def get_random_useragent():
     :return: UserAgent字符串
     """
     return random.choice(USER_AGENTS)
+
+
+def get_jd_time():
+    html = requests.get('https://a.jd.com//ajax/queryServerData.html')
+    resp_json = parse_json(html.text)
+    return resp_json.get('serverTime'), html.elapsed
